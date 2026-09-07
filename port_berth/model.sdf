@@ -1,0 +1,175 @@
+<?xml version="1.0" ?>
+<!--
+  Floating U-shaped berth / dock slip for the planning world.
+
+  Local frame: origin at the CENTRE of the berth pocket.
+    - berth inner width  : 5.0 m  (along X, from -2.5 to +2.5)
+    - berth inner depth  : 7.0 m  (along Y, from -3.5 to +3.5)
+    - entrance / opening : local +Y side (open to the water)
+    - back wall          : local -Y side
+  The WAM-V (~4.9 m long, ~2.5 m wide) fits inside with margin.
+
+  The whole dock is a static body floating on the water surface
+  (z = 0). Deck top is at z = 0.5.
+-->
+<sdf version="1.9">
+  <model name="port_berth">
+    <static>true</static>
+    <self_collide>false</self_collide>
+
+    <!-- Geometry parameters (metres) -->
+    <!-- berth inner width along X -->
+    <!-- berth inner depth along Y -->
+    <!-- dock wall thickness -->
+    <!-- dock body height (floats from z=0 to z=0.5) -->
+
+    <link name="dock">
+      <!-- Back wall (closes the -Y end) -->
+      <collision name="back_wall_collision">
+        <pose>0 -4 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>7 1 0.5</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.9</mu>
+              <mu2>0.9</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="back_wall_visual">
+        <pose>0 -4 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>7 1 0.5</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.35 0.28 0.20 1</ambient>
+          <diffuse>0.55 0.45 0.33 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- Left wall (local -X side) -->
+      <collision name="left_wall_collision">
+        <pose>-3 0 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 7 0.5</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.9</mu>
+              <mu2>0.9</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="left_wall_visual">
+        <pose>-3 0 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 7 0.5</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.35 0.28 0.20 1</ambient>
+          <diffuse>0.55 0.45 0.33 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- Right wall (local +X side) -->
+      <collision name="right_wall_collision">
+        <pose>3 0 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 7 0.5</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.9</mu>
+              <mu2>0.9</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="right_wall_visual">
+        <pose>3 0 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 7 0.5</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.35 0.28 0.20 1</ambient>
+          <diffuse>0.55 0.45 0.33 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- visual-only marker poles at the four berth corners -->
+      <visual name="pole_open_left">
+        <pose>-2.5 3.5 0.7 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.07</radius>
+            <length>1.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.9 0.2 0.2 1</ambient>
+          <diffuse>0.9 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+      <visual name="pole_open_right">
+        <pose>2.5 3.5 0.7 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.07</radius>
+            <length>1.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.8 0.2 1</ambient>
+          <diffuse>0.2 0.8 0.2 1</diffuse>
+        </material>
+      </visual>
+      <visual name="pole_back_left">
+        <pose>-2.5 -3.5 0.7 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.07</radius>
+            <length>1.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.9 0.2 0.2 1</ambient>
+          <diffuse>0.9 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+      <visual name="pole_back_right">
+        <pose>2.5 -3.5 0.7 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.07</radius>
+            <length>1.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.8 0.2 1</ambient>
+          <diffuse>0.2 0.8 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

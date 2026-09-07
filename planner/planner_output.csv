@@ -1,0 +1,4 @@
+port,px,success,length_m,max_curvature_1_per_m,min_obstacle_clearance_m,min_wall_clearance_m,attempts,last_error
+port_0,0.0,True,115.257,0.821644,4.949,2.5,1,
+port_50,50.0,True,101.717,0.035808,3.853,2.5,1,
+port_100,100.0,True,116.495,0.514041,3.793,2.5,1,
