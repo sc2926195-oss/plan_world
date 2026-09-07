@@ -415,7 +415,7 @@
     <!-- i.e. facing the port at (50, 100).                                -->
     <!-- ================================================================= -->
     <include>
-      <uri>file:///home/song/vrx_ws/my_plan_world/wamv_port</uri>
+      <uri>model://wamv_port</uri>
       <name>wamv</name>
       <pose>50 0 0.5 0 0 1.5707963267948966</pose>
     </include>
@@ -426,17 +426,17 @@
     <!-- i.e. toward the water / the boat.                                  -->
     <!-- ================================================================= -->
     <include>
-      <uri>file:///home/song/vrx_ws/my_plan_world/port_berth</uri>
+      <uri>model://port_berth</uri>
       <name>port_0</name>
       <pose>0 100 0 0 0 3.141592653589793</pose>
     </include>
     <include>
-      <uri>file:///home/song/vrx_ws/my_plan_world/port_berth</uri>
+      <uri>model://port_berth</uri>
       <name>port_1</name>
       <pose>50 100 0 0 0 3.141592653589793</pose>
     </include>
     <include>
-      <uri>file:///home/song/vrx_ws/my_plan_world/port_berth</uri>
+      <uri>model://port_berth</uri>
       <name>port_2</name>
       <pose>100 100 0 0 0 3.141592653589793</pose>
     </include>

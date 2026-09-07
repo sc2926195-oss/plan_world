@@ -12,6 +12,9 @@ if [[ "${1:-}" == "--" ]]; then shift; fi
 
 python3 "$HERE/generate_obstacles.py" "${SEED_ARGS[@]}"
 
+# 让仓库内的 model://wamv_port / model://port_berth 可被解析
+export GZ_SIM_RESOURCE_PATH="$HERE${GZ_SIM_RESOURCE_PATH:+:$GZ_SIM_RESOURCE_PATH}"
+
 source /opt/ros/humble/setup.bash
 source "$HOME/vrx_ws/install/setup.bash"
 exec ros2 launch vrx_gz vrx_environment.launch.py \

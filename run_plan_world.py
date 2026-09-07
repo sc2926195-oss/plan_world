@@ -92,7 +92,8 @@ def main() -> int:
     env_source = f"source {ROS_SETUP} && source {INSTALL_SETUP}"
     if not INSTALL_SETUP.exists():
         env_source = f"source {ROS_SETUP}"
-    launch_cmd = (f"{env_source} && ros2 launch vrx_gz vrx_environment.launch.py "
+    gz_res = (f'export GZ_SIM_RESOURCE_PATH="{WORLD_DIR}"' f'${{GZ_SIM_RESOURCE_PATH:+:$GZ_SIM_RESOURCE_PATH}} && ')
+    launch_cmd = (f"{gz_res}{env_source} && ros2 launch vrx_gz vrx_environment.launch.py "
                   f"world:=\"{world_sdf}\"")
     print(f"\n启动仿真(本终端将阻塞，Ctrl-C 退出):\n  {launch_cmd}\n")
     try:

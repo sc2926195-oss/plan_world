@@ -80,3 +80,38 @@ python3 -m planner.gz_models demo --interval 4   # 依次展示三条
 - plan_world_overview.png          俯视示意图（示例布局）
 - planner/                         规划器 v0（Informed RRT* + B样条 + 走廊，详见其 README）
 - docs/                           学习笔记整理版等文档
+
+## 在其他电脑复现 / 协作者快速开始
+
+**前置环境**（与开发机一致）：
+- Ubuntu 22.04 + ROS 2 Humble + Gazebo Garden(gz-sim7) + VRX（osrf/vrx 的 humble 分支）
+- 已按 VRX 方式建好 colcon 工作空间（建议就叫 `~/vrx_ws`），`colcon build` 完成并能用
+  `ros2 launch vrx_gz vrx_environment.launch.py` 起 VRX 世界；
+- Python: `numpy scipy matplotlib`。
+
+**步骤**：
+```bash
+# 1) 克隆到 ~/vrx_ws/my_plan_world（脚本约定：仓库位于工作空间下的 my_plan_world）
+cd ~/vrx_ws
+git clone https://github.com/sc2926195-oss/plan_world.git my_plan_world
+cd my_plan_world
+
+# 2) 一键：随机生成障碍 -> 规划三条航道并出图 -> 打开 Gazebo 仿真
+python3 run_plan_world.py
+#    想看固定布局：python3 run_plan_world.py --seed 2026
+#    只出图不启动：python3 run_plan_world.py --no-launch
+
+# 3) 仿真起来后，另开终端显示走廊：
+python3 -m planner.gz_models show --lane 0      # port_0（0/1/2 三条）
+python3 -m planner.gz_models demo --interval 4  # 依次展示三条
+python3 -m planner.gz_models clear              # 清除
+```
+
+说明：
+- 本仓库的模型已用 `model://` 引用，启动脚本会自动把仓库目录加入
+  `GZ_SIM_RESOURCE_PATH`，不需要改绝对路径；
+- `run_plan_world.py` 会自动 source `/opt/ros/humble` 与 `~/vrx_ws/install/setup.bash`；
+  若你的工作空间不在 `~/vrx_ws`，先手动 source 后执行（脚本会沿用当前环境）；
+- 障碍每次启动随机；世界、规划、出图、显示使用同一 seed，保证一致；
+- 汇报材料与思路总结见 `docs/planning_summary_for_report.md`，学习笔记见
+  `docs/planning_notes_organized.md`。
