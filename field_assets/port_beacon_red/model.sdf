@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <!-- 港口信标: 1 根杆 + 1 个灯板, 复用 vrx::LightBuoyPlugin 闪烁(red)。
+       灯板材质由插件按 1s/拍 循环: 3 拍 red + 2 拍 off => 闪烁。 -->
+  <model name="port_beacon_red">
+    <static>true</static>
+    <link name="beacon">
+      <visual name="pole">
+        <pose>0 0 0.8 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.05</radius>
+            <length>1.6</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.35 0.30 0.25 1</ambient>
+          <diffuse>0.45 0.40 0.35 1</diffuse>
+        </material>
+      </visual>
+      <visual name="lamp">
+        <pose>0 0 1.65 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.45 0.08 0.30</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.03 0.03 0.03 1</ambient>
+          <diffuse>0.03 0.03 0.03 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+        <plugin name="vrx::LightBuoyPlugin" filename="libLightBuoyPlugin.so">
+          <color_1>red</color_1>
+          <color_2>red</color_2>
+          <color_3>red</color_3>
+          <visuals>
+            <visual>port_beacon_red::beacon::lamp</visual>
+          </visuals>
+        </plugin>
+      </visual>
+    </link>
+  </model>
+</sdf>

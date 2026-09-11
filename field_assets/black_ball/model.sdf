@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <!-- 实战风格黑色大球障碍(静态, 球心 z=0 即贴水面, 上半露出水面)。
+       与 plan_world 现有静态障碍一致; radius 默认 1.5(直径 3 m), 按需改。 -->
+  <model name="black_ball">
+    <static>true</static>
+    <link name="ball">
+      <collision name="collision">
+        <geometry>
+          <sphere><radius>1.5</radius></sphere>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <sphere><radius>1.5</radius></sphere>
+        </geometry>
+        <material>
+          <ambient>0.02 0.02 0.02 1</ambient>
+          <diffuse>0.05 0.05 0.05 1</diffuse>
+          <specular>0.15 0.15 0.15 1</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

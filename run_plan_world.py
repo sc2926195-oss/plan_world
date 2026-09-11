@@ -48,6 +48,8 @@ def main() -> int:
                     help="不启动 Gazebo 仿真")
     ap.add_argument("--keep-obstacles", action="store_true",
                     help="不重新随机障碍，沿用当前 plan_world.sdf/obstacles_meta.json")
+    ap.add_argument("--align", action="store_true",
+                    help="使用旧的‘直入港’模式(默认是方案甲：允许斜入港 docking-free)")
     ap.add_argument("--planner-extra", default="",
                     help="透传给 plan_corridors 的额外参数，如 '--half-width 1.6'")
     args = ap.parse_args()
@@ -66,9 +68,11 @@ def main() -> int:
         if r.returncode != 0:
             return r.returncode
 
-    # 2) 规划三条航道 + 出图
+    # 2) 规划三条航道 + 出图（默认方案甲：斜入港；--align 切回直入港）
     planner_cmd = [sys.executable, "-m", "planner.plan_corridors",
                    "--seed", str(seed)]
+    if not args.align:
+        planner_cmd.append("--docking-free")
     if args.planner_extra:
         planner_cmd += args.planner_extra.split()
     r = run(planner_cmd, cwd=WORLD_DIR, env=env)
@@ -92,7 +96,8 @@ def main() -> int:
     env_source = f"source {ROS_SETUP} && source {INSTALL_SETUP}"
     if not INSTALL_SETUP.exists():
         env_source = f"source {ROS_SETUP}"
-    gz_res = (f'export GZ_SIM_RESOURCE_PATH="{WORLD_DIR}"' f'${{GZ_SIM_RESOURCE_PATH:+:$GZ_SIM_RESOURCE_PATH}} && ')
+    gz_res = (f'export GZ_SIM_RESOURCE_PATH="{WORLD_DIR}"'
+              f'${{GZ_SIM_RESOURCE_PATH:+:$GZ_SIM_RESOURCE_PATH}} && ')
     launch_cmd = (f"{gz_res}{env_source} && ros2 launch vrx_gz vrx_environment.launch.py "
                   f"world:=\"{world_sdf}\"")
     print(f"\n启动仿真(本终端将阻塞，Ctrl-C 退出):\n  {launch_cmd}\n")

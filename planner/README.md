@@ -14,9 +14,12 @@
 cd ~/vrx_ws/my_plan_world
 
 # 0) 一键：随机障碍 -> 规划 -> 出图 -> 打开仿真（推荐入口）
+#    默认 = 方案甲 docking-free：开阔段(可直连) + 多方向入港库(口部朝向θ∈78°~102°自动挑最短)
+     想用旧的“直入港”加 --align
 python3 run_plan_world.py                 # 全部随机
 python3 run_plan_world.py --seed 2026     # 固定种子
 python3 run_plan_world.py --no-launch     # 只出图不启动仿真
+python3 run_plan_world.py --align         # 直入港模式(较慢/可能在某些布局 R>=3 失败)
 
 # 1) 只重新规划（读取当前 obstacles_meta.json；--seed 可复现）
 python3 -m planner.plan_corridors --seed 2026
@@ -46,7 +49,9 @@ python3 -m planner.gz_markers show --lane 0
 | `--half-width` | 1.5 m | 走廊半宽（总宽 3.0 m）；船半宽约 1.25 m，泊位内净宽 5 m，故半宽须 < 2.5 m |
 | `--margin` | 2.0 m | 搜索期中心线相对障碍的额外裕度（搜索按 half-width+margin 避障） |
 | `--lane-join-y` | 90 m | 入港直线段起点 y；从此处笔直朝北进港中心 (px,100) |
-| `--attempts` | 6 | 单港口最多尝试次数（路径过尖/校验不过会换随机种子重试） |
+| `--min-radius` | 5.0 m | **硬约束**：全程最小转弯半径 R_min（曲率 ≤ 1/R_min）；
+不满足则该候选作废；`<=0` 关闭 |
+| `--attempts` | 8 | 单港口最多尝试次数（不满足硬约束/校验不过时换随机种子重试） |
 | `--seed` | 随机 | 规划随机种子；不传则每次不同 |
 
 ## 管线
@@ -77,3 +82,55 @@ Informed RRT* (起点(50,0) -> (px,90)，障碍按 hw+margin 膨胀、码头整�
 - 若发送失败：确认仿真 GUI 正在运行；可先 `gz service --list | grep marker`
   看服务名是否如预期。
 - `--dry-run` 只打印 gz service 命令不发送，便于排查。
+
+---
+
+# 在线避障重规划（混合结构，新增）
+
+目标场景（用户确认）：船知道自身位姿(真值)与三个港口位置、不知道障碍物位置、
+也不知道哪个港口正确；固定顺序拜访候选港，途中 lidar 发现障碍要能自己绕行。
+
+## 混合结构
+```
+全局：RRT* + B样条 + 走廊            (planner/plan_corridors.py，负责“大体路线/入港”)
+感知：lidar 近水平环 -> 圆弧拟合 -> 圆(cx,cy,r)
+反应：occ_grid.py  栅格 + A*          (被挡段附近局部搜索，确定性)
+拼接：replan.py    B样条 + 端点回拉   (绕行段平滑接回原航道)
+校验：净距 / 最小转弯半径 / 不切码头墙  (不通过 -> 自动加大过渡窗重试)
+```
+
+## 用法（离线，不需要 Gazebo）
+```bash
+cd ~/vrx_ws/my_plan_world
+python3 -m planner.replan --lane 1                 # 用 obstacles_meta 里被“感知”到的球
+python3 -m planner.replan --lane 1 --s-curve       # 注入两个错开障碍，演示 S 形绕行
+python3 -m planner.replan --lane 1 --inject never  # 只用真实障碍（当前布局可能不挡路）
+# 输出: planner/replan_demo.png / planner/replan_output.json
+```
+
+## 关键参数 / 口径
+| 参数 | 默认 | 含义 |
+|---|---|---|
+| `--half-width` | 1.5 m | 走廊半宽（与全局一致） |
+| `--margin` | 1.0 m | 判定“走廊被挡/栅格膨胀”的额外裕度：栅格 inflation = hw+margin |
+| `--cell` | 0.5 m | 栅格尺寸（局部窗口内） |
+| `--min-radius` | 5.0 m | 硬约束：绕行段最小转弯半径 |
+| `--lookback/--lookahead` | 10 m | 绕行窗口前后过渡长度；曲率不达标会按 1.0→1.5→2→2.5→3 自动加大 |
+| `--context` | 8 m | 样条拼接时两侧保留的原航道长度（保证切向连续） |
+| `--sense-range` | 40 m | 演示用：把离航道 < 该距离的障碍当作“已感知” |
+
+## 实现要点（踩过的坑）
+1. 平滑样条 `s>0` 时**不精确经过端点**（splprep 是逼近），直接拼接会出 V 形回折；
+   `_snap_ends()` 把两端线性回拉到精确拼接点解决。
+2. 原中心线点距 ~0.05 m；索引与“米”的换算必须用真实点距，不能用栅格 cell。
+3. 三点曲率在短段上会炸出假尖峰；统一用 `geometry.resample_uniform()` 按弧长
+   均匀重采样后再算曲率。
+4. 让出障碍的横向位移 δ 需要 ≈ `sqrt(8Rδ)/2` 的过渡长度：R=5、δ≈4m 时约 13m，
+   所以过渡窗要能自动放大（lookback 10→20m）。
+
+## 演示结果（lane 1，S 形双障碍；2026-09-10）
+- 最小转弯半径 `R_min = 6.54 m`（≥5 硬约束）
+- 中心线净距 `2.62 m`（≥hw=1.5）
+- 码头墙净距 `1.94 m`（≥hw=1.5）
+- 总长 103.84 m（原 102.2 m）
+- 三个航道用同一套参数都能过（lane0 R=5.29 / lane2 R=9.98）

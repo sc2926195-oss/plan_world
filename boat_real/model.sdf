@@ -1,0 +1,458 @@
+<?xml version="1.0" ?>
+<!--
+  boat_real — simplified catamaran USV matching the team's real competition
+  boat: 1.20 m (L) x 0.85 m (W) x ~0.45 m (H overall).
+
+  Local frame (same convention as the previous WAM-V in this world):
+    - origin: on the symmetry plane, roughly at the waterline plane (z=0)
+    - +X = bow / forward
+    - +Y = port side (left when looking forward)
+    - z up, water surface at z=0 in plan_world
+
+  Structure:
+    - two buoyant demi-hull boxes (collision + visual) at y = +/-0.315
+    - a deck + small cabin (visual only) so the boat looks like a small USV
+    - two fixed aft thrusters (propeller joints spin about +X); command topics
+      and namespace match the old WAM-V so control scripts keep working:
+        /wamv/thrusters/left/thrust   and   /wamv/thrusters/right/thrust  (N)
+    - buoyancy via vrx::Surface (params modeled on VRX roboboat01, which is a
+      similar ~1.2 m x 0.85 m catamaran) + vrx::SimpleHydrodynamics drag
+    - an IMU on the base link
+
+  Buoyancy tuning knobs (if it floats too high/low in test):
+    - <mass> in base_link inertial
+    - <hull_radius>/<hull_length>/<points> in the two vrx::Surface plugins
+-->
+<sdf version="1.9">
+  <model name="boat_real">
+    <link name='wamv/base_link'>
+      <inertial>
+        <!-- COM slightly below the waterline plane for roll/pitch stability -->
+        <pose>0 0 -0.04 0 0 0</pose>
+        <mass>15</mass>
+        <inertia>
+          <ixx>1.10</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.00</iyy>
+          <iyz>0</iyz>
+          <izz>2.70</izz>
+        </inertia>
+      </inertial>
+
+      <!-- ==================== collisions ==================== -->
+      <!-- Left demi-hull: box spans x[-0.6,0.6], y[-0.425,-0.205], z[-0.065,0.135] -->
+      <collision name="left_hull_collision">
+        <pose>0 -0.315 0.035 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.2 0.22 0.20</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.1</mu>
+              <mu2>0.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <!-- Right demi-hull -->
+      <collision name="right_hull_collision">
+        <pose>0 0.315 0.035 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.2 0.22 0.20</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.1</mu>
+              <mu2>0.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+
+      <!-- ==================== visuals ==================== -->
+      <visual name="left_hull_visual">
+        <pose>0 -0.315 0.035 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.2 0.22 0.20</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.05 0.10 0.16 1</ambient>
+          <diffuse>0.08 0.16 0.26 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+      <visual name="right_hull_visual">
+        <pose>0 0.315 0.035 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.2 0.22 0.20</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.05 0.10 0.16 1</ambient>
+          <diffuse>0.08 0.16 0.26 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+
+      <!-- Deck (visual only): spans both hulls, z[0.135,0.195] -->
+      <visual name="deck_visual">
+        <pose>0 0 0.165 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.15 0.84 0.06</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.55 0.58 0.62 1</ambient>
+          <diffuse>0.75 0.78 0.82 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- Small cabin / electronics box (visual only) -->
+      <visual name="cabin_visual">
+        <pose>-0.05 0 0.30 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.45 0.50 0.16</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.18 0.22 0.28 1</ambient>
+          <diffuse>0.26 0.31 0.38 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- ==================== sensors ==================== -->
+      <sensor name="imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>50</update_rate>
+        <imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.0002</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.0002</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.0002</stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+
+      <!-- Front RGB camera (perception test rig; same sensor params as
+           the old WAM-V cameras: 1280x720 R8G8B8, HFOV ~80 deg, pitched
+           slightly downward so the water/beacons stay in view). -->
+      <sensor name='front_camera_sensor' type='camera'>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <camera name='front_camera'>
+          <horizontal_fov>1.3962634</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>400</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <pose>0.50 0 0.44 0 0.2618 0</pose>
+      </sensor>
+      <!-- camera mast + housing (visual only) -->
+      <visual name="cam_mast_visual">
+        <pose>0.45 0 0.30 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.015</radius>
+            <length>0.30</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+      <visual name="cam_housing_visual">
+        <pose>0.46 0 0.44 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.06 0.12 0.06</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.3 0.3 0.3 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 3D lidar (same 16-beam 360-deg params as the old WAM-V lidar).
+           Mounted on a centre mast above the cabin so the scan ring sits
+           above the deck/waves and can see floating obstacles. -->
+      <sensor name='lidar_sensor' type='gpu_ray'>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <update_rate>10</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>1875</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.1415926535897931</min_angle>
+              <max_angle>3.1415926535897931</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>16</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.26179938779914941</min_angle>
+              <max_angle>0.26179938779914941</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>130</max>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </ray>
+        <pose>0 0 0.60 0 0 0</pose>
+      </sensor>
+      <visual name="lidar_mast_visual">
+        <pose>0 0 0.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.012</radius>
+            <length>0.26</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+      <visual name="lidar_housing_visual">
+        <pose>0 0 0.60 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.06</radius>
+            <length>0.10</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.05 0.05 0.05 1</ambient>
+          <diffuse>0.12 0.12 0.12 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <!-- ============================================================
+         Left thruster (fixed pod at the stern, propeller spins about X)
+         ============================================================ -->
+    <joint name='wamv/left_propeller_joint' type='revolute'>
+      <pose relative_to='wamv/base_link'>-0.56 -0.315 -0.02 0 0 0</pose>
+      <parent>wamv/base_link</parent>
+      <child>wamv/left_propeller_link</child>
+      <axis>
+        <xyz>1 0 0</xyz>
+        <limit>
+          <lower>-inf</lower>
+          <upper>inf</upper>
+          <effort>10</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.05</damping>
+          <friction>0.05</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='wamv/left_propeller_link'>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0004</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0004</iyy>
+          <iyz>0</iyz>
+          <izz>0.0004</izz>
+        </inertia>
+      </inertial>
+      <collision name="left_prop_collision">
+        <pose>0 0 0 0 1.5707963267948966 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.06</length>
+            <radius>0.07</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="left_prop_visual">
+        <pose>0 0 0 0 1.5707963267948966 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.06</length>
+            <radius>0.07</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.25 0.25 0.25 1</ambient>
+          <diffuse>0.35 0.35 0.35 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <!-- ============================================================
+         Right thruster (mirrored)
+         ============================================================ -->
+    <joint name='wamv/right_propeller_joint' type='revolute'>
+      <pose relative_to='wamv/base_link'>-0.56 0.315 -0.02 0 0 0</pose>
+      <parent>wamv/base_link</parent>
+      <child>wamv/right_propeller_link</child>
+      <axis>
+        <xyz>1 0 0</xyz>
+        <limit>
+          <lower>-inf</lower>
+          <upper>inf</upper>
+          <effort>10</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.05</damping>
+          <friction>0.05</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='wamv/right_propeller_link'>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0004</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0004</iyy>
+          <iyz>0</iyz>
+          <izz>0.0004</izz>
+        </inertia>
+      </inertial>
+      <collision name="right_prop_collision">
+        <pose>0 0 0 0 1.5707963267948966 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.06</length>
+            <radius>0.07</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="right_prop_visual">
+        <pose>0 0 0 0 1.5707963267948966 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.06</length>
+            <radius>0.07</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.25 0.25 0.25 1</ambient>
+          <diffuse>0.35 0.35 0.35 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <!-- ============================================================
+         Buoyancy + hydrodynamics + thrusters (interface = old WAM-V)
+         ============================================================ -->
+    <plugin name='vrx::Surface' filename='libSurface.so'>
+      <link_name>wamv/base_link</link_name>
+      <hull_length>1.15</hull_length>
+      <hull_radius>0.12</hull_radius>
+      <fluid_level>0.1</fluid_level>
+      <points>
+        <point>0.7 -0.315 0.03</point>
+        <point>-0.5 -0.315 0.03</point>
+      </points>
+      <wavefield>
+        <topic>/vrx/wavefield/parameters</topic>
+      </wavefield>
+    </plugin>
+    <plugin name='vrx::Surface' filename='libSurface.so'>
+      <link_name>wamv/base_link</link_name>
+      <hull_length>1.15</hull_length>
+      <hull_radius>0.12</hull_radius>
+      <fluid_level>0.1</fluid_level>
+      <points>
+        <point>0.7 0.315 0.03</point>
+        <point>-0.5 0.315 0.03</point>
+      </points>
+      <wavefield>
+        <topic>/vrx/wavefield/parameters</topic>
+      </wavefield>
+    </plugin>
+    <plugin name='vrx::SimpleHydrodynamics' filename='libSimpleHydrodynamics.so'>
+      <link_name>wamv/base_link</link_name>
+      <xDotU>0.0</xDotU>
+      <yDotV>0.0</yDotV>
+      <nDotR>0.0</nDotR>
+      <xU>5.0</xU>
+      <xUU>8.0</xUU>
+      <yV>5.0</yV>
+      <yVV>5.0</yVV>
+      <zW>30.0</zW>
+      <kP>20.0</kP>
+      <kPP>30.0</kPP>
+      <mQ>40.0</mQ>
+      <mQQ>40.0</mQQ>
+      <nR>10.0</nR>
+      <nRR>12.0</nRR>
+    </plugin>
+    <plugin name='gz::sim::systems::Thruster' filename='gz-sim-thruster-system'>
+      <joint_name>wamv/left_propeller_joint</joint_name>
+      <thrust_coefficient>0.004</thrust_coefficient>
+      <fluid_density>1000</fluid_density>
+      <propeller_diameter>0.12</propeller_diameter>
+      <velocity_control>true</velocity_control>
+      <max_thrust_cmd>120.0</max_thrust_cmd>
+      <namespace>wamv</namespace>
+      <topic>thrusters/left/thrust</topic>
+      <name>left</name>
+    </plugin>
+    <plugin name='gz::sim::systems::Thruster' filename='gz-sim-thruster-system'>
+      <joint_name>wamv/right_propeller_joint</joint_name>
+      <thrust_coefficient>0.004</thrust_coefficient>
+      <fluid_density>1000</fluid_density>
+      <propeller_diameter>0.12</propeller_diameter>
+      <velocity_control>true</velocity_control>
+      <max_thrust_cmd>120.0</max_thrust_cmd>
+      <namespace>wamv</namespace>
+      <topic>thrusters/right/thrust</topic>
+      <name>right</name>
+    </plugin>
+  </model>
+</sdf>

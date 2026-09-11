@@ -411,13 +411,15 @@
     </model>
 
     <!-- ================================================================= -->
-    <!-- WAM-V: spawn at (50, 0), bow (+X local) rotated +90 deg => +Y,     -->
-    <!-- i.e. facing the port at (50, 100).                                -->
+    <!-- Real-size small USV (boat_real, ~1.2 x 0.85 x 0.45 m): spawn at    -->
+    <!-- (50, 0), bow (+X local) rotated +90 deg => +Y, i.e. facing the     -->
+    <!-- port at (50, 100). Interface keeps the name/topics of the old      -->
+    <!-- WAM-V so the planner/control scripts keep working.                 -->
     <!-- ================================================================= -->
     <include>
-      <uri>model://wamv_port</uri>
+      <uri>model://boat_real</uri>
       <name>wamv</name>
-      <pose>50 0 0.5 0 0 1.5707963267948966</pose>
+      <pose>50 0 0.15 0 0 1.5707963267948966</pose>
     </include>
 
     <!-- ================================================================= -->
@@ -442,30 +444,192 @@
     </include>
 
     <!-- ================================================================= -->
+    <!-- Beacons (实战: 正确港闪绿灯, 其余两港闪红灯)。本块由 field_assets/set_beacons.py
+         管理(选哪个港为绿港); 手工改请保持三座港口各一个 beacon。 -->
+    <!-- ===== BEACONS (BEGIN) ===== -->
+    <model name="beacon_port_0">
+      <static>true</static>
+      <pose>0.0 101.25 0.5 0 0 0</pose>
+      <link name="beacon">
+        <visual name="base">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.30 0.50 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.22 0.20 1</ambient>
+            <diffuse>0.35 0.32 0.30 1</diffuse>
+          </material>
+        </visual>
+        <visual name="pole">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>1.6</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.35 0.30 0.25 1</ambient>
+            <diffuse>0.45 0.40 0.35 1</diffuse>
+          </material>
+        </visual>
+        <visual name="lamp">
+          <pose>0 0 1.65 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.45 0.08 0.30</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.03 0.03 0.03 1</ambient>
+            <diffuse>0.03 0.03 0.03 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+          <plugin name="vrx::LightBuoyPlugin" filename="libLightBuoyPlugin.so">
+            <color_1>red</color_1>
+            <color_2>red</color_2>
+            <color_3>red</color_3>
+            <visuals>
+              <visual>beacon_port_0::beacon::lamp</visual>
+            </visuals>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="beacon_port_1">
+      <static>true</static>
+      <pose>50.0 101.25 0.5 0 0 0</pose>
+      <link name="beacon">
+        <visual name="base">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.30 0.50 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.22 0.20 1</ambient>
+            <diffuse>0.35 0.32 0.30 1</diffuse>
+          </material>
+        </visual>
+        <visual name="pole">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>1.6</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.35 0.30 0.25 1</ambient>
+            <diffuse>0.45 0.40 0.35 1</diffuse>
+          </material>
+        </visual>
+        <visual name="lamp">
+          <pose>0 0 1.65 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.45 0.08 0.30</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.03 0.03 0.03 1</ambient>
+            <diffuse>0.03 0.03 0.03 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+          <plugin name="vrx::LightBuoyPlugin" filename="libLightBuoyPlugin.so">
+            <color_1>red</color_1>
+            <color_2>red</color_2>
+            <color_3>red</color_3>
+            <visuals>
+              <visual>beacon_port_1::beacon::lamp</visual>
+            </visuals>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="beacon_port_2">
+      <static>true</static>
+      <pose>100.0 101.25 0.5 0 0 0</pose>
+      <link name="beacon">
+        <visual name="base">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.30 0.50 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.22 0.20 1</ambient>
+            <diffuse>0.35 0.32 0.30 1</diffuse>
+          </material>
+        </visual>
+        <visual name="pole">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>1.6</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.35 0.30 0.25 1</ambient>
+            <diffuse>0.45 0.40 0.35 1</diffuse>
+          </material>
+        </visual>
+        <visual name="lamp">
+          <pose>0 0 1.65 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.45 0.08 0.30</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.03 0.03 0.03 1</ambient>
+            <diffuse>0.03 0.03 0.03 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+          <plugin name="vrx::LightBuoyPlugin" filename="libLightBuoyPlugin.so">
+            <color_1>green</color_1>
+            <color_2>green</color_2>
+            <color_3>green</color_3>
+            <visuals>
+              <visual>beacon_port_2::beacon::lamp</visual>
+            </visuals>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <!-- ===== BEACONS (END) ===== -->
+
+    <!-- ================================================================= -->
     <!-- Obstacles: injected by generate_obstacles.py. Do not edit by hand. -->
     <!-- ================================================================= -->
     <!-- ===== AUTO-GENERATED OBSTACLES (BEGIN) ===== -->
     <model name="obstacle_0">
       <static>true</static>
-      <pose>51.328 45.896 0.300 0 0 4.5706</pose>
+      <pose>47.486 53.313 0.000 0 0 1.7253</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -473,25 +637,25 @@
 
     <model name="obstacle_1">
       <static>true</static>
-      <pose>8.901 73.293 0.300 0 0 3.5726</pose>
+      <pose>77.297 88.449 0.000 0 0 1.1730</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -499,25 +663,25 @@
 
     <model name="obstacle_2">
       <static>true</static>
-      <pose>29.779 63.524 0.300 0 0 2.9990</pose>
+      <pose>93.773 76.048 0.000 0 0 5.3534</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -525,25 +689,25 @@
 
     <model name="obstacle_3">
       <static>true</static>
-      <pose>86.263 17.889 0.300 0 0 4.0814</pose>
+      <pose>54.876 68.068 0.000 0 0 2.1626</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -551,25 +715,25 @@
 
     <model name="obstacle_4">
       <static>true</static>
-      <pose>87.720 49.204 0.300 0 0 0.1942</pose>
+      <pose>41.760 12.934 0.000 0 0 5.4804</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -577,31 +741,25 @@
 
     <model name="obstacle_5">
       <static>true</static>
-      <pose>68.634 54.117 0.000 0 0 2.9257</pose>
+      <pose>22.501 57.231 0.000 0 0 5.6210</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <polyline>
-              <point>0.0000 2.7745</point>
-              <point>-2.4028 -1.3873</point>
-              <point>2.4028 -1.3873</point>
-              <height>0.6000</height>
-          </polyline>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <polyline>
-              <point>0.0000 2.7745</point>
-              <point>-2.4028 -1.3873</point>
-              <point>2.4028 -1.3873</point>
-              <height>0.6000</height>
-          </polyline>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.900 0.550 0.100 1.0</ambient>
-            <diffuse>0.900 0.550 0.100 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -609,25 +767,25 @@
 
     <model name="obstacle_6">
       <static>true</static>
-      <pose>68.405 63.716 0.300 0 0 4.9824</pose>
+      <pose>25.625 65.552 0.000 0 0 6.2473</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -635,25 +793,25 @@
 
     <model name="obstacle_7">
       <static>true</static>
-      <pose>12.046 33.621 0.300 0 0 1.9104</pose>
+      <pose>56.777 15.852 0.000 0 0 3.4244</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -661,25 +819,25 @@
 
     <model name="obstacle_8">
       <static>true</static>
-      <pose>40.689 46.261 0.300 0 0 5.2469</pose>
+      <pose>33.954 37.462 0.000 0 0 2.8290</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>
@@ -687,25 +845,25 @@
 
     <model name="obstacle_9">
       <static>true</static>
-      <pose>81.382 55.044 0.300 0 0 0.9318</pose>
+      <pose>37.920 45.861 0.000 0 0 6.0737</pose>
       <link name="obstacle">
         <collision name="collision">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
         </collision>
         <visual name="visual">
         <geometry>
-          <box>
-            <size>3.1623 3.1623 0.6000</size>
-          </box>
+          <sphere>
+            <radius>1.6000</radius>
+          </sphere>
         </geometry>
           <material>
-            <ambient>0.800 0.200 0.150 1.0</ambient>
-            <diffuse>0.800 0.200 0.150 1.0</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
+            <ambient>0.020 0.020 0.020 1.0</ambient>
+            <diffuse>0.020 0.020 0.020 1.0</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
           </material>
         </visual>
       </link>

@@ -3,9 +3,9 @@
 """
 Generate the random obstacles for the planning world (plan_world.sdf).
 
-Obstacles:  10 static floating objects, each either an equilateral triangle
-            or a square, footprint ~10 m^2, scattered inside the 100x100 m
-            water region (x/y in [0,100]).
+Obstacles:  10 static floating BLACK BALLS (实战风格), radius BALL_RADIUS,
+            scattered inside the 100x100 m water region (x/y in [0,100]).
+            默认 --shape ball；也可 --shape mixed 退回方/三角。
 
 It rewrites the block between the two markers
     <!-- ===== AUTO-GENERATED OBSTACLES (BEGIN) ===== -->
@@ -22,6 +22,8 @@ import csv
 import json
 import math
 import random
+import subprocess
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -49,6 +51,11 @@ DEFAULT_SEED = None   # None => random seed chosen at every run
 # colors (r g b a)
 COLOR_SQUARE = (0.80, 0.20, 0.15, 1.0)
 COLOR_TRIANGLE = (0.90, 0.55, 0.10, 1.0)
+COLOR_BALL = (0.02, 0.02, 0.02, 1.0)
+
+# 黑色大球障碍(实战风格): 半径/直径
+BALL_RADIUS = 1.6          # m; 球心贴水面(z=0), 上半露出
+
 
 
 def square_geom(side):
@@ -79,6 +86,32 @@ def add(p, q):
 
 def build_obstacle_model(idx, kind, cx, cy, yaw):
     """Return the SDF <model> text for one static floating obstacle."""
+    if kind == "ball":
+        geom = (
+            "        <geometry>\n"
+            "          <sphere>\n"
+            f"            <radius>{BALL_RADIUS:.4f}</radius>\n"
+            "          </sphere>\n"
+            "        </geometry>\n"
+        )
+        local_z = 0.0   # 球心贴水面, 上半露出、下半在水下(碰撞含水下部分)
+        color = COLOR_BALL
+        return f"""    <model name="obstacle_{idx}">
+      <static>true</static>
+      <pose>{cx:.3f} {cy:.3f} {local_z:.3f} 0 0 {yaw:.4f}</pose>
+      <link name="obstacle">
+        <collision name="collision">
+{geom}        </collision>
+        <visual name="visual">
+{geom}          <material>
+            <ambient>{color[0]:.3f} {color[1]:.3f} {color[2]:.3f} {color[3]:.1f}</ambient>
+            <diffuse>{color[0]:.3f} {color[1]:.3f} {color[2]:.3f} {color[3]:.1f}</diffuse>
+            <specular>0.15 0.15 0.15 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+"""
     if kind == "square":
         side = math.sqrt(AREA)
         geom = (
@@ -148,6 +181,8 @@ def main():
                              "(default: random every run)")
     ap.add_argument("--count", type=int, default=N_OBSTACLES)
     ap.add_argument("--area", type=float, default=AREA)
+    ap.add_argument("--shape", default="ball", choices=("ball", "mixed"),
+                    help="ball=10个黑色大球(默认,实战); mixed=方/三角混合(旧)")
     args = ap.parse_args()
 
     if args.seed is None:
@@ -158,23 +193,29 @@ def main():
     attempts = 0
     while len(obstacles) < args.count and attempts < 10000:
         attempts += 1
-        kind = rng.choice(("square", "triangle"))
+        kind = ("ball" if args.shape == "ball"
+                else rng.choice(("square", "triangle")))
         cx, cy = sample_clear(rng)
         # keep a minimum separation between obstacle centres
         if any(math.hypot(cx - o["x"], cy - o["y"]) < MIN_SEPARATION
                for o in obstacles):
             continue
         yaw = rng.uniform(0.0, 2.0 * math.pi)
-        side = (math.sqrt(args.area) if kind == "square"
-                else math.sqrt(4.0 * args.area / math.sqrt(3.0)))
-        local = square_geom(side) if kind == "square" else triangle_geom(side)
+        if kind == "ball":
+            # 用外接正方形(边=直径)作保守足迹多边形: 圆 ⊂ 方, 规划安全
+            side = 2.0 * BALL_RADIUS
+            local = square_geom(side)
+        else:
+            side = (math.sqrt(args.area) if kind == "square"
+                    else math.sqrt(4.0 * args.area / math.sqrt(3.0)))
+            local = square_geom(side) if kind == "square" else triangle_geom(side)
         world_poly = [add(rot_yaw(local, yaw)[i], (cx, cy)) for i in range(len(local))]
         # keep every footprint vertex inside the 100x100 water region
         if not all(0.0 <= px <= 100.0 and 0.0 <= py <= 100.0
                    for px, py in world_poly):
             continue
         idx = len(obstacles)
-        obstacles.append({
+        entry = {
             "id": idx,
             "shape": kind,
             "area_m2": round(args.area, 3),
@@ -183,7 +224,11 @@ def main():
             "y": round(cy, 3),
             "yaw_rad": round(yaw, 4),
             "polygon_xy": [[round(px, 3), round(py, 3)] for px, py in world_poly],
-        })
+        }
+        if kind == "ball":
+            entry["area_m2"] = round(math.pi * BALL_RADIUS**2, 3)
+            entry["radius_m"] = BALL_RADIUS
+        obstacles.append(entry)
         models.append(build_obstacle_model(idx, kind, cx, cy, yaw))
 
     if len(obstacles) < args.count:
@@ -216,10 +261,20 @@ def main():
 
     with META_CSV.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["id", "shape", "area_m2", "side_m", "x", "y", "yaw_rad"])
+        w.writerow(["id", "shape", "area_m2", "side_m", "radius_m", "x", "y", "yaw_rad"])
         for o in obstacles:
             w.writerow([o["id"], o["shape"], o["area_m2"], o["side_m"],
-                        o["x"], o["y"], o["yaw_rad"]])
+                        o.get("radius_m", ""), o["x"], o["y"], o["yaw_rad"]])
+
+    # ---- 同一个 seed 决定"哪个港口是正确的" (可复现) --------------------
+    beacon = HERE / "field_assets" / "set_beacons.py"
+    green = random.Random(int(args.seed) * 7919 + 13).randrange(3)
+    if beacon.exists():
+        subprocess.run([sys.executable, str(beacon), "--sdf", str(WORLD_FILE),
+                        "--green", str(green)], check=True)
+        print(f"seed={args.seed}: 正确港口 = port_{green} (绿), 其余为红")
+    else:
+        print(f"[warn] 未找到 {beacon}, 信标颜色未更新")
 
     print(f"seed={args.seed}: placed {len(obstacles)} obstacles")
     for o in obstacles:

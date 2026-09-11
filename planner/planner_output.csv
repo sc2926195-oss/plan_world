@@ -1,4 +1,4 @@
-port,px,success,length_m,max_curvature_1_per_m,min_obstacle_clearance_m,min_wall_clearance_m,attempts,last_error
-port_0,0.0,True,115.257,0.821644,4.949,2.5,1,
-port_50,50.0,True,101.717,0.035808,3.853,2.5,1,
-port_100,100.0,True,116.495,0.514041,3.793,2.5,1,
+port,px,success,length_m,max_curvature_1_per_m,min_turn_radius_m,min_radius_constraint_m,min_obstacle_clearance_m,min_wall_clearance_m,attempts,last_error
+port_0,0.0,True,118.067,0.12855,7.779,5.0,3.608,2.129,1,
+port_50,50.0,True,102.23,0.099576,10.043,5.0,5.174,1.935,1,
+port_100,100.0,True,113.738,0.047196,21.188,5.0,4.418,2.056,1,

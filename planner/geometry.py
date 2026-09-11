@@ -193,6 +193,39 @@ def curvature_from_pts(pts: Sequence[Point]) -> List[float]:
     return out
 
 
+def resample_uniform(pts: Sequence[Point], step: float) -> List[Point]:
+    """按弧长从头均匀重采样(不保留原始顶点)，用于曲率计算/走廊生成。
+
+    与 resample_polyline 的区别：后者保留原顶点(可能很密)，会让三点曲率
+    在短段处出现假尖峰；本函数输出点距≈step，得到稳定的曲率估计。
+    """
+    pts = [tuple(p) for p in pts]
+    if len(pts) < 2:
+        return pts
+    seg = [dist_point_point(a, b) for a, b in zip(pts[:-1], pts[1:])]
+    L = sum(seg)
+    if L < EPS:
+        return [pts[0]]
+    n = max(2, int(math.ceil(L / step)) + 1)
+    targets = [L * i / (n - 1) for i in range(n)]
+    out = [pts[0]]
+    acc = 0.0
+    k = 0
+    for t in targets[1:]:
+        while k < len(seg) and acc + seg[k] < t - 1e-12:
+            acc += seg[k]; k += 1
+        if k >= len(seg):
+            out.append(pts[-1]); break
+        if seg[k] < EPS:
+            continue
+        r = (t - acc) / seg[k]
+        out.append((pts[k][0] + (pts[k + 1][0] - pts[k][0]) * r,
+                    pts[k][1] + (pts[k + 1][1] - pts[k][1]) * r))
+    if out[-1] != pts[-1]:
+        out.append(pts[-1])
+    return out
+
+
 def rect_poly(cx: float, cy: float, hw: float, hh: float) -> Poly:
     """中心 (cx,cy)，半宽 hw、半高 hh 的轴对齐矩形。"""
     return [(cx - hw, cy - hh), (cx + hw, cy - hh),

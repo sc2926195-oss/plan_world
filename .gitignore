@@ -1,2 +1,9 @@
 __pycache__/
 *.pyc
+
+# 本地备份/实验残留，不入库
+*.bak
+*.bak_*
+*.bak2*
+.bak_balls/
+*_output.bak.json

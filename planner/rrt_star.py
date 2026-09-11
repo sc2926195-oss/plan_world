@@ -31,10 +31,19 @@ class RRTStar:
                  rewire_radius: float = 12.0,
                  goal_radius: float = 2.0,
                  goal_sample_bias: float = 0.08,
-                 seed: Optional[int] = None):
+                 seed: Optional[int] = None,
+                 layers: Optional[Sequence[Tuple[Sequence[G.Poly],
+                                                 float]]] = None):
+        """layers: [(polys, clearance), ...] 各层用各自的 clearance 做碰撞。
+
+        不传 layers 时等价于单层 (obstacles, clearance)，保持原行为。
+        """
         self.obstacles = list(obstacles)
-        self.field = G.ObstacleField(self.obstacles)
         self.clearance = clearance
+        if layers is not None:
+            self.checks = [(G.ObstacleField(pl), clr) for pl, clr in layers]
+        else:
+            self.checks = [(G.ObstacleField(self.obstacles), clearance)]
         self.xmin, self.ymin, self.xmax, self.ymax = bounds
         self.max_step = max_step
         self.rewire_radius = rewire_radius
@@ -80,8 +89,10 @@ class RRTStar:
                 return np.array([wx, wy], float)
 
     def _collision_free(self, a: np.ndarray, b: np.ndarray) -> bool:
-        return self.field.seg_clear((a[0], a[1]), (b[0], b[1]),
-                                    self.clearance)
+        for field, clr in self.checks:
+            if not field.seg_clear((a[0], a[1]), (b[0], b[1]), clr):
+                return False
+        return True
 
     def _nearest(self, pts: np.ndarray, p: np.ndarray) -> int:
         d = (pts[:, 0] - p[0]) ** 2 + (pts[:, 1] - p[1]) ** 2
@@ -104,7 +115,8 @@ class RRTStar:
         g = np.asarray(goal, float)
 
         # 直连可行就直接返回（很常见的 shortcut）
-        if self.field.seg_clear(start, goal, self.clearance):
+        if all(field.seg_clear(start, goal, clr)
+               for field, clr in self.checks):
             return {"path": [tuple(start), tuple(goal)],
                     "cost": float(np.linalg.norm(g - s)), "found": True,
                     "iterations": 0, "tree": [] if return_tree else None}

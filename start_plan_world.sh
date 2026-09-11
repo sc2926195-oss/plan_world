@@ -12,7 +12,7 @@ if [[ "${1:-}" == "--" ]]; then shift; fi
 
 python3 "$HERE/generate_obstacles.py" "${SEED_ARGS[@]}"
 
-# 让仓库内的 model://wamv_port / model://port_berth 可被解析
+# 让仓库内的 model://boat_real / model://port_berth 可被解析
 export GZ_SIM_RESOURCE_PATH="$HERE${GZ_SIM_RESOURCE_PATH:+:$GZ_SIM_RESOURCE_PATH}"
 
 source /opt/ros/humble/setup.bash
